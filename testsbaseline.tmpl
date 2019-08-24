@@ -1,0 +1,25 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/jeffprestes/goethereumhelper"
+	"github.com/jeffprestes/insulin/tmp/proxycontracts"
+)
+
+func main() {
+	auth, backend, _ := goethereumhelper.GetMockBlockchain()
+	contractAddress, trx, contractInstance, err := proxycontracts.DeployRegistro(auth, backend)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error when trying to compile contract: %v\n", err)
+		os.Exit(1)
+	}
+	backend.Commit()
+	msg, _ := contractInstance.Mensagem(nil)
+	if msg != "Uma boa e pacifica morte para todos..." {
+		fmt.Fprint(os.Stderr, "wrong information is returning from contract. What is returning is : ", msg)
+		os.Exit(1)
+	}
+	fmt.Println("Contract Address: ", contractAddress.String(), " - Transaction: ", trx.Hash().String(), " - Message stored: ", msg)
+}
