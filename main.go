@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 
-	"github.com/ethereum/go-ethereum/common/compiler"
+	"gopkg.in/urfave/cli.v1"
 )
 
 const (
@@ -18,30 +20,50 @@ contract test {
 `
 )
 
-func main() {
-	fmt.Println("O Rio de Janeiro continua lindo...")
-	contracts, err := compiler.CompileSolidityString("", testSource)
+const (
+	commandHelperTemplate = `{{.Name}}{{if .Subcommands}} command{{end}}{{if .Flags}} [command options]{{end}} [arguments...]
+{{if .Description}}{{.Description}}
+{{end}}{{if .Subcommands}}
+SUBCOMMANDS:
+	{{range .Subcommands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
+	{{end}}{{end}}{{if .Flags}}
+OPTIONS:
+{{range $.Flags}}{{"\t"}}{{.}}
+{{end}}
+{{end}}`
+)
+
+var (
+	app *cli.App
+)
+
+func init() {
+	app = cli.NewApp()
+	app.Name = "Insulin"
+	app.Commands = []cli.Command{
+		{
+			Name:    "compile",
+			Aliases: []string{"c"},
+			Usage:   "compile Solidity contract",
+			Action:  comp,
+		},
+	}
+	cli.CommandHelpTemplate = commandHelperTemplate
+}
+
+func comp(c *cli.Context) error {
+	SolidityPath := c.Args().Get(0)
+	data, err := ioutil.ReadFile(SolidityPath)
 	if err != nil {
-		fmt.Printf("error compiling source. result %v: %v", contracts, err)
+		fmt.Println("File reading error", err)
 	}
-	if len(contracts) != 1 {
-		fmt.Printf("one contract expected, got %d", len(contracts))
+	fmt.Printf(string(data))
+	return nil
+}
+
+func main() {
+	if err := app.Run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
-	c, ok := contracts["test"]
-	if !ok {
-		c, ok = contracts["<stdin>:test"]
-		if !ok {
-			fmt.Println("info for contract 'test' not present in result")
-		}
-	}
-	if c.Code == "" {
-		fmt.Println("empty code")
-	}
-	if c.Info.Source != testSource {
-		fmt.Println("wrong source")
-	}
-	if c.Info.CompilerVersion == "" {
-		fmt.Println("empty version")
-	}
-	fmt.Printf("\nCompiled Contract %#v\n", contracts["<stdin>:test"])
 }
