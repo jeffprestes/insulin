@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"log"
+	"os"
 	"os/exec"
+	"strings"
+	"text/template"
 
 	"github.com/ethereum/go-ethereum/common/compiler"
 )
@@ -59,13 +62,29 @@ func main() {
 		return
 	}
 	fmt.Printf("\nCompiled Contract %#v\n\n", contracts["<stdin>:test"])
+}
 
-	if err := ioutil.WriteFile("./tmp/teste.go", []byte(testGoSource), 0600); err != nil {
-		fmt.Printf("Failed to write ABI binding: %v", err)
+func createTestFile(fileInfo os.FileInfo) (err error) {
+	tmp := strings.Split(fileInfo.Name(), ".")
+	fileName := tmp[0]
+	templateFile, err := template.ParseFiles("./testsbaseline.tmpl")
+	if err != nil {
+		fmt.Printf("Failed to open template file: %v", err)
 		return
 	}
+	file, err := os.Create("./tmp/" + fileName + ".go")
+	if err != nil {
+		fmt.Printf("Failed to create test file: %v", err)
+		return
+	}
+	err = templateFile.Execute(file, "")
+	if err != nil {
+		log.Print("execute: ", err)
+		return
+	}
+	file.Close()
 	var out, stderr bytes.Buffer
-	cmd := exec.Command("go", "build", "-o", "./tmp/teste", "./tmp/teste.go")
+	cmd := exec.Command("go", "build", "-o", "./tmp/"+fileName, "./tmp/"+fileName+".go")
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err = cmd.Run()
@@ -74,11 +93,16 @@ func main() {
 		return
 	}
 	fmt.Println("Binary generated: ", out.String())
+	return
+}
 
-	out.Reset()
-	stderr.Reset()
+func runTestFile(fileInfo os.FileInfo) (err error) {
+	tmp := strings.Split(fileInfo.Name(), ".")
+	fileName := tmp[0]
 
-	cmd = exec.Command("./tmp/teste")
+	var out, stderr bytes.Buffer
+
+	cmd := exec.Command("./tmp/" + fileName)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err = cmd.Run()
@@ -87,4 +111,5 @@ func main() {
 		return
 	}
 	fmt.Println("Binary executed: ", out.String())
+	return
 }
