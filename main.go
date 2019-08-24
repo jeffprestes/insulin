@@ -136,6 +136,7 @@ func callComp(c *cli.Context) (err error) {
 			data, err := ioutil.ReadFile(file.Name())
 			if err != nil {
 				fmt.Println("Error reading extension", err)
+				return err
 			}
 			compile(string(data), file)
 			createTestFile(file)
