@@ -15,17 +15,15 @@ import (
 )
 
 func callComp(c *cli.Context) {
-	solidityPath := c.Args().Get(0)
-	files, err := ioutil.ReadDir(solidityPath)
+	files, err := parseInput(c, "./contracts")
 	if err != nil {
-		fmt.Println("callComp error: ", err)
 		return
 	}
 
 	for _, file := range files {
 		r, _ := regexp.MatchString(".sol", file.Name())
 		if r {
-			data, err := ioutil.ReadFile(file.Name())
+			data, err := ioutil.ReadFile("./contracts/" + file.Name())
 			if err != nil {
 				fmt.Println("Error reading extension", err)
 				return
@@ -34,17 +32,69 @@ func callComp(c *cli.Context) {
 			if err != nil {
 				return
 			}
-			createJsMochaTestFile(file)
-			if err != nil {
-				return
-			}
-			runTestJsMochaFile(file)
-			if err != nil {
-				return
-			}
 		}
 	}
 	return
+}
+
+func callMakeTest(c *cli.Context) {
+	files, err := parseInput(c, "./tmp/proxycontracts")
+	if err != nil {
+		return
+	}
+	for _, file := range files {
+		err := makeTests(file)
+		if err != nil {
+			return
+		}
+	}
+
+}
+
+func callRunTest(c *cli.Context) {
+	files, err := parseInput(c, "./tmp/proxycontracts")
+	if err != nil {
+		return
+	}
+	for _, file := range files {
+		err := runTests(file)
+		if err != nil {
+			return
+		}
+	}
+
+}
+
+func makeTests(file os.FileInfo) (err error) {
+	err = createJsMochaTestFile(file)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func runTests(file os.FileInfo) (err error) {
+	err = runTestJsMochaFile(file)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func parseInput(c *cli.Context, solidityPath string) (files []os.FileInfo, err error) {
+	// //solidityPath := c.Args().Get(0)
+	// solidityPath := "./"
+	// if useProxy {
+	// 	solidityPath += "/tmp/proxycontracts"
+	// }
+
+	fmt.Println()
+	files, err = ioutil.ReadDir(solidityPath)
+	if err != nil {
+		fmt.Println("callComp error: ", err)
+		return
+	}
+	return files, err
 }
 
 func compile(testSource string, fileInfo os.FileInfo) (err error) {
