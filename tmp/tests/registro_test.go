@@ -10,7 +10,8 @@ func Test(t *testing.T) {
 	g := Goblin(t)
 	g.Describe("Registro", func() {
 		// Passing Test
-		g.It("Should add two numbers ", func() {
+		proxycontract
+		g.It("Should register ", func() {
 			g.Assert(1 + 1).Equal(2)
 		})
 		// Failing Test
