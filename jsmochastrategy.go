@@ -38,19 +38,18 @@ func createJsMochaTestFile(fileInfo os.FileInfo) (err error) {
 }
 
 func runTestJsMochaFile(fileInfo os.FileInfo) (err error) {
-	tmp := strings.Split(fileInfo.Name(), ".")
-	fileName := tmp[0]
-
+	err = nil
+	var fileName = "./tmp/tests/" + fileInfo.Name()
 	var out, stderr bytes.Buffer
 
-	cmd := exec.Command("go", "test", "./tmp/tests/"+fileName+"_test.go")
+	cmd := exec.Command("go", "test", fileName)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("Failed to execute Go code dinamically generated: %v\n%v", err, stderr.String())
+		fmt.Printf("Tests for file %s failed\n%s\n", fileName, out.String())
 		return
 	}
-	fmt.Println("Tests executed: ", out.String())
+	fmt.Printf("Tests of file %s were executed:%s\n", fileName, out.String())
 	return
 }

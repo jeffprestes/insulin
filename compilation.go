@@ -52,7 +52,7 @@ func callMakeTest(c *cli.Context) {
 }
 
 func callRunTest(c *cli.Context) {
-	files, err := parseInput(c, "./tmp/proxycontracts")
+	files, err := parseInput(c, "./tmp/tests")
 	if err != nil {
 		return
 	}
