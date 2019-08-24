@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
+	"text/template"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common/compiler"
@@ -20,6 +24,7 @@ func compile(testSource string, fileInfo os.FileInfo) {
 	contracts, err := compiler.CompileSolidityString("", testSource)
 	if err != nil {
 		fmt.Printf("error compiling source. result %v: %v", contracts, err)
+		return
 	}
 
 	var (
@@ -133,6 +138,8 @@ func callComp(c *cli.Context) (err error) {
 				fmt.Println("Error reading extension", err)
 			}
 			compile(string(data), file)
+			createTestFile(file)
+			runTestFile(file)
 		}
 		if err != nil {
 			fmt.Println("File reading error", err)
@@ -148,4 +155,54 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func createTestFile(fileInfo os.FileInfo) (err error) {
+	tmp := strings.Split(fileInfo.Name(), ".")
+	fileName := tmp[0]
+	templateFile, err := template.ParseFiles("./testsbaseline.tmpl")
+	if err != nil {
+		fmt.Printf("Failed to open template file: %v", err)
+		return
+	}
+	file, err := os.Create("./tmp/" + fileName + ".go")
+	if err != nil {
+		fmt.Printf("Failed to create test file: %v", err)
+		return
+	}
+	err = templateFile.Execute(file, "")
+	if err != nil {
+		log.Print("execute: ", err)
+		return
+	}
+	file.Close()
+	var out, stderr bytes.Buffer
+	cmd := exec.Command("go", "build", "-o", "./tmp/"+fileName, "./tmp/"+fileName+".go")
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Failed to compile Go code: %v\n%v", err, stderr.String())
+		return
+	}
+	fmt.Println("Binary generated: ", out.String())
+	return
+}
+
+func runTestFile(fileInfo os.FileInfo) (err error) {
+	tmp := strings.Split(fileInfo.Name(), ".")
+	fileName := tmp[0]
+
+	var out, stderr bytes.Buffer
+
+	cmd := exec.Command("./tmp/" + fileName)
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Failed to execute Go code dinamically generated: %v\n%v", err, stderr.String())
+		return
+	}
+	fmt.Println("Binary executed: ", out.String())
+	return
 }
