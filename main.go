@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -14,7 +15,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
-func compile(testSource string) {
+func compile(testSource string, fileInfo os.FileInfo) {
 	fmt.Println("Compiling contracts...")
 	contracts, err := compiler.CompileSolidityString("", testSource)
 	if err != nil {
@@ -47,7 +48,7 @@ func compile(testSource string) {
 		}
 
 		os.Mkdir("artifacts", 0700)
-		err = ioutil.WriteFile("./artifacts/testaaa.json", file, 0644)
+		err = ioutil.WriteFile("./artifacts/"+strings.Split(fileInfo.Name(), ".")[0]+".json", file, 0644)
 		if err != nil {
 			fmt.Printf("Failed to write file to disk: %v", err)
 		}
@@ -68,14 +69,19 @@ func compile(testSource string) {
 
 	//fmt.Println("abis: ", abis, "bins: ", bins, "sigs: ", sigs, "types: ", types, "libs: ", libs)
 
-	code, err := bind.Bind(types, abis, bins, sigs, "artifacts", bind.LangGo, libs)
+	code, err := bind.Bind(types, abis, bins, sigs, "proxycontracts", bind.LangGo, libs)
 	if err != nil {
-		fmt.Println("Failed to generate ABI binding: %v", err)
+		fmt.Println("Failed to generate ABI binding:", err)
+		return
 	}
 
-	os.MkdirAll("tmp/proxycontracts", 0700)
-	if err := ioutil.WriteFile("./tmp/proxycontracts/testaaa.go", []byte(code), 0600); err != nil {
-		fmt.Println("Failed to write ABI binding: %v", err)
+	if err := os.MkdirAll("tmp/proxycontracts", 0700); err != nil {
+		fmt.Println("Failed to create directory:", err)
+		return
+	}
+
+	if err := ioutil.WriteFile("./tmp/proxycontracts/"+strings.Split(fileInfo.Name(), ".")[0]+".go", []byte(code), 0600); err != nil {
+		fmt.Println("Failed to write ABI binding", err)
 	}
 }
 
@@ -110,14 +116,31 @@ func init() {
 	cli.CommandHelpTemplate = commandHelperTemplate
 }
 
-func callComp(c *cli.Context) error {
-	SolidityPath := c.Args().Get(0)
-	data, err := ioutil.ReadFile(SolidityPath)
+func callComp(c *cli.Context) (err error) {
+	solidityPath := c.Args().Get(0)
+	files, err := ioutil.ReadDir(solidityPath)
 	if err != nil {
-		fmt.Println("File reading error", err)
+		fmt.Println("callComp error: ", err)
+		return
 	}
-	compile(string(data))
-	return nil
+
+	for _, file := range files {
+
+		r, err := regexp.MatchString(".sol", file.Name())
+		if r {
+			data, err := ioutil.ReadFile(file.Name())
+			if err != nil {
+				fmt.Println("Error reading extension", err)
+			}
+			compile(string(data), file)
+		}
+		if err != nil {
+			fmt.Println("File reading error", err)
+			return err
+		}
+
+	}
+	return
 }
 
 func main() {
