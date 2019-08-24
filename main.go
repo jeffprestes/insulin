@@ -57,6 +57,12 @@ func init() {
 				},
 			},
 		},
+		{
+			Name:    "analyze",
+			Aliases: []string{"a"},
+			Usage:   "analyze with MythX",
+			Action:  mythX,
+		},
 	}
 	cli.CommandHelpTemplate = commandHelperTemplate
 }
