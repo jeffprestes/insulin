@@ -57,9 +57,12 @@ func callRunTest(c *cli.Context) {
 		return
 	}
 	for _, file := range files {
-		err := runTests(file)
-		if err != nil {
-			return
+		r, _ := regexp.MatchString(".go", file.Name())
+		if r {
+			err := runTests(file)
+			if err != nil {
+				return
+			}
 		}
 	}
 

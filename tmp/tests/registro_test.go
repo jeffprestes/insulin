@@ -36,7 +36,7 @@ func Test(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 		})
-		// Failing Test
+		// OK Test
 		g.It("Should bring message", func() {
 			var err error
 			msg, err := contractInstance.Mensagem(nil)
@@ -44,6 +44,16 @@ func Test(t *testing.T) {
 				g.Fail(fmt.Sprintf("It was not possible to bring the message: %v\n", err))
 			}
 			g.Assert(msg).Equal("Uma boa e pacifica morte para todos...")
+			fmt.Println("Contract Address: ", contractAddress.String(), " - Transaction: ", trx.Hash().String(), " - Message stored: ", msg)
+		})
+		// Failing Test
+		g.It("Should not bring message", func() {
+			var err error
+			msg, err := contractInstance.Mensagem(nil)
+			if err != nil {
+				g.Fail(fmt.Sprintf("It was not possible to bring the message: %v\n", err))
+			}
+			g.Assert(msg).Equal("Umasss boa e pacifica morte para todos...")
 			fmt.Println("Contract Address: ", contractAddress.String(), " - Transaction: ", trx.Hash().String(), " - Message stored: ", msg)
 		})
 	})

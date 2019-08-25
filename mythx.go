@@ -103,30 +103,14 @@ func compileForMythX(testSource string, fileInfo os.FileInfo) (err error) {
 		fmt.Printf("Error decoding Mythx authentication response: %s\n", err.Error())
 		return
 	}
-	fmt.Println("Success! MythX Credentials Response", credentials)
+	//fmt.Println("Success! MythX Credentials Response", credentials)
 
 	contract := MythXSCAnalysisRequest{}
 	contract.ClientToolName = "Insulin"
 	contract.Data.Bytecode = contractCompiled.Contracts.ContractsRegistroSolRegistro.Bin
-	contract.Data.MainSource = contractCompiled.SourceList[0]
-	contract.Data.Sources.Contract.Source = `pragma solidity ^0.5.0;
-
-	contract Registro {
-			string public mensagem;
-	
-			constructor () public {
-					mensagem = "Uma boa e pacifica morte para todos...";
-			}
-	
-			function RegistrarMensagem(string memory _mensagem) public {
-					mensagem = _mensagem;
-					emit NovaMensagem(mensagem);
-			}
-	
-			event NovaMensagem(
-					string _novaMsg
-			);
-	}`
+	//contract.Data.MainSource = contractCompiled.SourceList[0]
+	contract.Data.MainSource = "Registro"
+	contract.Data.Sources.Contract.Source = testSource
 	ast, err := json.Marshal(contractCompiled.Sources.ContractsRegistroSol.AST)
 	if err != nil {
 		fmt.Println("Error marsheling AST compiled to string", err)
@@ -165,6 +149,7 @@ func compileForMythX(testSource string, fileInfo os.FileInfo) (err error) {
 			return
 		}
 		fmt.Println("Error returned from MythX SC analysis data", resp.Status, string(text))
+		fmt.Println(contract.Data.MainSource, contract.Data.Sources.Contract.Source)
 		return
 	}
 	analysis := MythXSCAnalysisResponse{}
