@@ -46,3 +46,9 @@ To run the tests
 ```bash
 insulin test run
 ```
+
+#### Analyzing
+```bash
+insulin analyze
+```
+Will send the `.sol` files to MythX
