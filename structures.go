@@ -1,5 +1,64 @@
 package main
 
+import "time"
+
+//MythXSCAnalysisResponse response from MythX analysis
+type MythXSCAnalysisResponse struct {
+	APIVersion     string    `json:"apiVersion"`
+	HarveyVersion  string    `json:"harveyVersion"`
+	MaruVersion    string    `json:"maruVersion"`
+	MythrilVersion string    `json:"mythrilVersion"`
+	QueueTime      int       `json:"queueTime"`
+	Status         string    `json:"status"`
+	SubmittedAt    time.Time `json:"submittedAt"`
+	SubmittedBy    string    `json:"submittedBy"`
+	UUID           string    `json:"uuid"`
+}
+
+//MythXSCAnalysisRequest request to MythX SC Analysis
+type MythXSCAnalysisRequest struct {
+	ClientToolName string `json:"clientToolName"`
+	NoCacheLookup  bool   `json:"noCacheLookup"`
+	Data           struct {
+		Bytecode   string `json:"bytecode"`
+		MainSource string `json:"mainSource"`
+		Sources    struct {
+			Contract struct {
+				Source string `json:"source"`
+				Ast    string `json:"ast"`
+			} `json:"Registro.sol"`
+		} `json:"sources"`
+	} `json:"data"`
+}
+
+//MythXCredentialsResponse return from Mythx
+type MythXCredentialsResponse struct {
+	JwtTokens struct {
+		Access  string `json:"access"`
+		Refresh string `json:"refresh"`
+	} `json:"jwtTokens"`
+	Permissions struct {
+		Owned     []string `json:"owned"`
+		Requested []string `json:"requested"`
+		Granted   []string `json:"granted"`
+	} `json:"permissions"`
+	Access  string `json:"access"`
+	Refresh string `json:"refresh"`
+}
+
+//MythXCredentialsRequest submit to MythX
+type MythXCredentialsRequest struct {
+	Password     string `json:"password"`
+	Username     string `json:"username"`
+	JwtLifetimes struct {
+		Access  string `json:"access"`
+		Refresh string `json:"refresh"`
+	} `json:"jwtLifetimes"`
+	Permissions []string `json:"permissions"`
+	EthAddress  string   `json:"ethAddress"`
+	UserID      string   `json:"userId"`
+}
+
 //SolidityContract This reflects a structure of solc compilation parameters ast,bin,bin-runtime,srcmap,srcmap-runtime,abi,userdoc,devdoc,metadata,hashes
 type SolidityContract struct {
 	Contracts struct {
@@ -13,8 +72,8 @@ type SolidityContract struct {
 				Mensagem                string `json:"mensagem()"`
 			} `json:"hashes"`
 			Metadata      string `json:"metadata"`
-			Srcmap        string `json:"srcmap"`
-			SrcmapRuntime string `json:"srcmap-runtime"`
+			Srcmap        string `json:"sourceMap"`
+			SrcmapRuntime string `json:"deployedSourceMap"`
 			Userdoc       string `json:"userdoc"`
 		} `json:"./contracts/registro.sol:Registro"`
 	} `json:"contracts"`
